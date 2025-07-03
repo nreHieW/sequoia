@@ -65,6 +65,10 @@ const saveSleepRecord = async (values: z.infer<typeof sleepSchema>) => {
       onConflict: "date",
     }
   );
+  if (error) {
+    console.error("Error saving sleep record:", error);
+    throw error;
+  }
   return data;
 };
 

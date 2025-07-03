@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { FoodItemList } from "@/lib/types";
 import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { X, Camera } from "lucide-react";
+import { Card, CardContent, CardHeader } from "../ui/card";
+import { X } from "lucide-react";
 
 const IMAGE_SIZE = 414;
 
@@ -193,6 +193,7 @@ const CalorieTracker = () => {
             className="hidden"
           />
       </div>}
+      {isAnalyzing && <p className="text-sm text-muted-foreground">Analyzing...</p>}
       <p>{JSON.stringify(aiResponse)}</p>
     </div>
   );

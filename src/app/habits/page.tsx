@@ -30,13 +30,13 @@ const fetchPastHabits = async () => {
   return data;
 };
 
-const page = () => {
-  const { data: habits, error: habitsError } = useQuery<Habit[]>({
+const Page = () => {
+  const { data: habits } = useQuery<Habit[]>({
     queryKey: ["habits"],
     queryFn: fetchHabits,
   });
 
-  const { data: habitRecords, error: habitRecordsError } = useQuery<HabitRecord[]>({
+  const { data: habitRecords } = useQuery<HabitRecord[]>({
     queryKey: ["habitRecords"],
     queryFn: fetchPastHabits,
   });
@@ -66,4 +66,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page

@@ -11,22 +11,24 @@ import {
   Area,
   ResponsiveContainer,
   AreaChart,
-  LineChart,
 } from "recharts";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../ui/button";
 
 const fetchSleepRecords = async () => {
-  let { data, error } = await supabase
+  const { data: initialData, error } = await supabase
     .from("sleep_records")
     .select("id, date, sleep_time, wake_time, hours_slept, timezone")
     .order("date", { ascending: true });
-  if (error) console.error("Error fetching sleep records:", error.message);
+  if (error) {
+    console.error("Error fetching sleep records:", error.message);
+    throw error;
+  }
 
   const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  data = (data || []).map((record) => {
+  const processedData = (initialData || []).map((record) => {
     let sleepTime = record.sleep_time;
     let wakeTime = record.wake_time;
 
@@ -77,7 +79,7 @@ const fetchSleepRecords = async () => {
       timezone: record.timezone,
     } as SleepRecord;
   });
-  return data as SleepRecord[];
+  return processedData as SleepRecord[];
 };
 
 const processSleepRecords = (
@@ -149,13 +151,11 @@ const SleepGraph = () => {
   const [selectedRecord, setSelectedRecord] = useState<SleepRecord | null>(
     null
   );
-  const { data: rawSleepRecords, error } = useQuery({
+  const { data: rawSleepRecords } = useQuery({
     queryKey: ["sleepRecords"],
     queryFn: fetchSleepRecords,
   });
-  const CustomDot = (props: any) => {
-    const { cx, cy, payload } = props;
-
+  const CustomDot = ({ cx, cy }: { cx?: number; cy?: number }) => {
     return (
       <Dot
         cx={cx}
@@ -252,13 +252,13 @@ const SleepGraph = () => {
           <AreaChart
             data={processedSleepRecords}
             margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
-            onClick={(data: any) => {
+            onClick={(chartEvent) => {
+              const { activeIndex } = chartEvent as { activeIndex?: number };
               if (
-                data &&
-                data.activeIndex !== undefined &&
-                processedSleepRecords[data.activeIndex]
+                activeIndex !== undefined &&
+                processedSleepRecords[activeIndex]
               ) {
-                const selectedRecord = processedSleepRecords[data.activeIndex];
+                const selectedRecord = processedSleepRecords[activeIndex];
                 setSelectedRecord(selectedRecord);
               }
             }}

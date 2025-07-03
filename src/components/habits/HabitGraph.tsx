@@ -25,7 +25,7 @@ const HabitGraph = ({
   const dateGrid = useMemo(() => {
     const today = new Date();
     const startDate = new Date(today);
-    startDate.setDate(today.getDate() - (NUM_WEEKS * NUM_DAYS - 1));
+    startDate.setDate(today.getDate() - (TOTAL_DAYS - 1));
 
     const grid: string[][] = [];
     for (let weekIndex = 0; weekIndex < NUM_WEEKS; weekIndex++) {

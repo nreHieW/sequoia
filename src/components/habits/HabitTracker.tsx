@@ -1,6 +1,6 @@
 "use client";
 import { supabase } from "@/lib/supabase";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Habit, HabitRecord } from "@/lib/types";
 import HabitCard from "./HabitCard";
 import { zodResolver } from "@hookform/resolvers/zod";
