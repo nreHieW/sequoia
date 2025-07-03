@@ -16,12 +16,11 @@ const HabitCard = ({
   onCheckedChange: (id: string, checked: boolean) => void;
   isChecked: boolean;
 }) => {
-    console.log(isChecked);
   return (
     <Card>
       <CardContent className="flex items-center justify-between">
         <div className="flex items-center gap-5">
-          <Checkbox onCheckedChange={(checked) => onCheckedChange(habit.id, !!checked)} checked={isChecked} />
+          <Checkbox onCheckedChange={(checked) => onCheckedChange(habit.id, !!checked)} checked={isChecked} className="border-1 border-black" />
           <div>
             <p className="font-bold">{habit.name}</p>
             <p>{habit.description}</p>

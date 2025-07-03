@@ -7,36 +7,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-const fetchHabits = async () => {
-  const { data, error } = await supabase
-    .from("habits")
-    .select("id, name, color, description");
-  if (error) throw error;
-  return data;
-};
 
-const fetchTodayHabits = async () => {
-  const { data, error } = await supabase
-    .from("habit_records")
-    .select("*")
-    .eq("date", new Date().toISOString().split("T")[0]);
-  if (error) throw error;
-  return data;
-};
 
-const HabitTracker = () => {
+const HabitTracker = ({ habits, habitRecords }: { habits: Habit[], habitRecords: HabitRecord[] }) => {
   const queryClient = useQueryClient();
-  const { data: habits, error } = useQuery<Habit[]>({
-    queryKey: ["habits"],
-    queryFn: fetchHabits,
-  });
 
-  const { data: todayHabits, error: todayHabitsError } = useQuery<
-    HabitRecord[]
-  >({
-    queryKey: ["todayHabits"],
-    queryFn: fetchTodayHabits,
-  });
+  const todayHabits = habitRecords?.filter((habit) => habit.date === new Date().toISOString().split("T")[0]);
 
   const deleteHabit = async (id: string) => {
     const { error: recordsError } = await supabase
@@ -85,7 +61,7 @@ const HabitTracker = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["habits"] });
-      queryClient.invalidateQueries({ queryKey: ["todayHabits"] });
+      queryClient.invalidateQueries({ queryKey: ["habitRecords"] });
     },
   });
 

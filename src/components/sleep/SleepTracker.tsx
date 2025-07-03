@@ -91,17 +91,16 @@ const SleepTracker = () => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-2/3 space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
         <FormField
           control={form.control}
           name="sleepTime"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Sleep Time</FormLabel>
+              <FormLabel>Sleep Time (Last Night)</FormLabel>
               <FormControl>
-                <Input type="time" className="w-1/2" {...field} />
+                <Input type="time" className="w-full" {...field} />
               </FormControl>
-
               <FormMessage />
             </FormItem>
           )}
@@ -111,9 +110,9 @@ const SleepTracker = () => {
           name="wakeTime"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Wake Time</FormLabel>
+              <FormLabel>Wake Time (This Morning)</FormLabel>
               <FormControl>
-                <Input type="time" className="w-1/2" {...field} />
+                <Input type="time" className="w-full" {...field} />
               </FormControl>
 
               <FormMessage />
@@ -121,7 +120,12 @@ const SleepTracker = () => {
           )}
         />
 
-        <Button type="submit" disabled={sleepMutation.isPending}>
+        <Button
+          type="submit"
+          disabled={sleepMutation.isPending}
+          className="w-full border-1 border-black/50"
+          variant="outline"
+        >
           {sleepMutation.isPending ? "Saving..." : "Submit"}
         </Button>
       </form>
@@ -130,4 +134,3 @@ const SleepTracker = () => {
 };
 
 export default SleepTracker;
-

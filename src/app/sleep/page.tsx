@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const page = () => {
   return (
-    <div>
+    <div className="flex flex-col gap-4 px-4 md:px-6 lg:px-8 py-4">
         <Card>
             <CardHeader>
                 <CardTitle>Sleep Tracker</CardTitle>
@@ -18,7 +18,7 @@ const page = () => {
             <CardHeader>
                 <CardTitle>Sleep Graph</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="min-h-80">
                 <SleepGraph />
             </CardContent>
         </Card>

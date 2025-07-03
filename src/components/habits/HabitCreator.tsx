@@ -16,6 +16,12 @@ import { Input } from "../ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { generateRandomColor } from "@/lib/utils";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronsUpDown } from "lucide-react";
 
 const habitSchema = z.object({
   name: z.string().min(1),
@@ -63,48 +69,62 @@ const HabitCreator = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Add New Habit</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="w-full space-y-6"
-          >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Habit Name</FormLabel>
-                  <FormControl>
-                    <Input type="text" className="w-full" {...field} />
-                  </FormControl>
+      <Collapsible>
+        <CollapsibleTrigger className="w-full">
+          <CardHeader>
+            <div className="flex flex-row items-center justify-between w-full">
+              <CardTitle>Add New Habit</CardTitle>
+              <ChevronsUpDown className="w-4 h-4 shrink-0" />
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="w-full space-y-6"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Habit Name</FormLabel>
+                      <FormControl>
+                        <Input type="text" className="w-full" {...field} />
+                      </FormControl>
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Habit Description</FormLabel>
-                  <FormControl>
-                    <Input type="text" className="w-full" {...field} />
-                  </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Habit Description</FormLabel>
+                      <FormControl>
+                        <Input type="text" className="w-full" {...field} />
+                      </FormControl>
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <Button type="submit">Submit</Button>
-          </form>
-        </Form>
-      </CardContent>
+                <Button
+                  type="submit"
+                  className="w-full border-1 border-black/50"
+                >
+                  Submit
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 };

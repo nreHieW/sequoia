@@ -4,9 +4,9 @@ export interface SleepRecord {
     
     // Local user timezone 
     date: string; // YYYY-MM-DD format
-    sleepTime: string; // HH:MM format
-    wakeTime: string; // HH:MM format
-    hoursSlept: number;
+    sleep_time: string; // HH:MM format
+    wake_time: string; // HH:MM format
+    hours_slept: number;
 
     timezone: string;
     
