@@ -15,7 +15,7 @@ async function login(formData: FormData) {
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "";
 
   if (password === ADMIN_PASSWORD && password.length > 0) {
-    // @ts-ignore - cookies() is mutable in server actions
+    // @ts-expect-error - cookies() is mutable in server actions
     cookies().set("auth", "true", {
       httpOnly: true,
       sameSite: "lax",

@@ -1,17 +1,46 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { AnimatePresence } from "framer-motion";
 import { FoodItemList } from "@/lib/types";
 import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader } from "../ui/card";
-import { X } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { X, Camera, BookImage, Check } from "lucide-react";
+import ScanningAnimation from "./ScanningAnimation";
+import { useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
+import { supabase } from "@/lib/supabase";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../ui/form";
+import { Input } from "../ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import FoodItemCard from "./FoodItemCard";
+
+const foodSchema = z.object({
+  details: z.string().optional(),
+});
 
 const IMAGE_SIZE = 414;
 
 const CalorieTracker = () => {
+  const queryClient = useQueryClient();
   const [aiResponse, setAiResponse] = useState<FoodItemList | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [uploadMethod, setUploadMethod] = useState<"camera" | "upload" | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<"camera" | "upload" | null>(
+    null
+  );
   const [imageData, setImageData] = useState<string | null>(null);
 
   const [isCapturing, setIsCapturing] = useState(false);
@@ -69,7 +98,6 @@ const CalorieTracker = () => {
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("handleFileUpload");
     const file = event.target.files?.[0];
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
@@ -95,12 +123,32 @@ const CalorieTracker = () => {
 
   const triggerFileUpload = () => {
     setUploadMethod("upload");
-    console.log(fileInputRef.current);
     fileInputRef.current?.click();
   };
 
+  const uploadFoodRecord = async (foodData: FoodItemList) => {
+    try {
+      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
 
-  const getFoodInfo = async (imageData: string) => {
+      const { error } = await supabase.from("food_records").insert({
+        date: today,
+        total_calories: foodData.totalCalories,
+        parts: foodData.parts,
+      });
+
+      if (error) {
+        console.error("Error uploading food record:", error);
+      } else {
+        console.log("Food record uploaded successfully");
+        // Invalidate queries to refresh any food record lists
+        queryClient.invalidateQueries({ queryKey: ["foodRecords"] });
+      }
+    } catch (error) {
+      console.error("Error uploading to Supabase:", error);
+    }
+  };
+
+  const getFoodInfo = async (data: { imageData: string; details?: string }) => {
     setIsAnalyzing(true);
     try {
       const response = await fetch("/api/analyze-food", {
@@ -110,8 +158,10 @@ const CalorieTracker = () => {
         },
         body: JSON.stringify({
           prompt:
-            "Analyze this food image. Identify the food items and provide nutritional information.",
-          image: imageData,
+            "Analyze this food image. Identify the food items and provide nutritional information. Additional user provided details: " +
+            data.details,
+          image: data.imageData,
+          details: data.details,
         }),
       });
 
@@ -119,83 +169,190 @@ const CalorieTracker = () => {
         throw new Error("Failed to analyze image");
       }
 
-      const data = (await response.json()) as { response: FoodItemList };
-      setAiResponse(data.response || null);
+      const aiResponseData = (await response.json()) as {
+        response: FoodItemList;
+      };
+
+      setIsAnalyzing(false); // Stop animation immediately
+      setAiResponse(aiResponseData.response || null);
+      if (aiResponseData.response) {
+        uploadFoodRecord(aiResponseData.response);
+      }
     } catch (error) {
       console.error("Error analyzing image:", error);
       setAiResponse(null);
-    } finally {
-      setIsAnalyzing(false);
+      setIsAnalyzing(false); // Stop animation on error too
     }
   };
-  console.log(uploadMethod);
+
+  const form = useForm<z.infer<typeof foodSchema>>({
+    resolver: zodResolver(foodSchema),
+    defaultValues: {
+      details: "",
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof foodSchema>) => {
+    if (imageData) {
+      getFoodInfo({ imageData, details: values.details });
+    }
+  };
 
   return (
-    <div>
-        
-        <div className="px-3">
-        
-          <Card className={`px-0 ${imageData || uploadMethod !== null ? "block" : "hidden"}`}>
-            <CardHeader className="flex justify-end">
-              <X
-                onClick={() => {
-                  stopCamera();
-                  setImageData(null);
-                  setUploadMethod(null);
-                }}
-                className="cursor-pointer"
-              />
-            </CardHeader>
-            <CardContent>
-              {uploadMethod === "camera" && <video
-                ref={videoRef}
-                className={`w-full max-w-md mx-auto rounded-lg ${
-                  isCapturing ? "block" : "hidden"
-                }`}
-                style={{ maxHeight: "400px" }}
-                autoPlay
-                playsInline
-              />}
-              <canvas
-                ref={canvasRef}
-                className={`w-full max-w-md mx-auto rounded-lg ${
-                  imageData ? "block" : "hidden"
-                }`}
-                style={{ maxHeight: "400px" }}
-              />
-              {isCapturing && (
-                <div className="flex justify-center pt-3">
-                  <Button onClick={captureImage}>Capture Image</Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-
-      {imageData && (
-        <Button onClick={() => getFoodInfo(imageData)}>Analyze</Button>
-      )}
-      {!isCapturing && <div>
-        <Button onClick={() => {
-          setUploadMethod("camera");
-          startCamera();
-        }}>Camera</Button>
-          <Button onClick={() => {
-            setUploadMethod("upload");
-            triggerFileUpload();
-          }}>Upload Image from Gallery</Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
-            className="hidden"
+    <Card>
+      <CardHeader>
+        <CardTitle>Calorie Tracker</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {(!imageData || uploadMethod === null) && (
+          <div className="flex gap-5 items-center justify-center">
+            <Button
+              onClick={() => {
+                setUploadMethod("camera");
+                startCamera();
+              }}
+              variant="outline"
+              className="w-15 h-10 border-1 border-black/50"
+            >
+              <Camera />
+            </Button>
+            <Button
+              onClick={() => {
+                setUploadMethod("upload");
+                triggerFileUpload();
+              }}
+              variant="outline"
+              className="w-15 h-10 border-1 border-black/50"
+            >
+              <BookImage />
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </div>
+        )}
+        {uploadMethod === "camera" && (
+          <video
+            ref={videoRef}
+            className={`w-full max-w-md mx-auto rounded-lg ${
+              isCapturing ? "block" : "hidden"
+            }`}
+            style={{ maxHeight: "400px" }}
+            autoPlay
+            playsInline
           />
-      </div>}
-      {isAnalyzing && <p className="text-sm text-muted-foreground">Analyzing...</p>}
-      <p>{JSON.stringify(aiResponse)}</p>
-    </div>
+        )}
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            className={`w-full max-w-md mx-auto rounded-lg ${
+              imageData ? "block" : "hidden"
+            }`}
+            style={{ maxHeight: "400px" }}
+          />
+          <AnimatePresence>
+            {isAnalyzing && <ScanningAnimation />}
+          </AnimatePresence>
+        </div>
+        {isCapturing && (
+          <div className="flex justify-center pt-3">
+            <Button onClick={captureImage}>Capture Image</Button>
+          </div>
+        )}
+        {imageData && (
+          <div className="mt-5 space-y-4">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="w-full space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="details"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        Additional Details (Optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Add any details about the food..."
+                          {...field}
+                          className="w-full"
+                          disabled={isAnalyzing}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-center items-center gap-5">
+                  {(isAnalyzing || aiResponse === null) && (
+                    <Button
+                      type="submit"
+                      className="border-0 w-10 h-10"
+                      variant="outline"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <X
+                    onClick={() => {
+                      stopCamera();
+                      setImageData(null);
+                      setUploadMethod(null);
+                      setAiResponse(null);
+                      form.reset();
+                    }}
+                    className="cursor-pointer h-5 w-5"
+                  />
+                </div>
+              </form>
+            </Form>
+          </div>
+        )}
+      </CardContent>
+      {uploadMethod !== null && imageData !== null && (
+        <AIResponse aiResponse={aiResponse} />
+      )}
+    </Card>
+  );
+};
+
+const AIResponse = ({ aiResponse }: { aiResponse: FoodItemList | null }) => {
+  if (!aiResponse) return null;
+  const totalCalories = aiResponse.totalCalories;
+  const parts = aiResponse.parts;
+
+  return (
+    <CardContent className="pt-0">
+      <FoodItemCard
+        foodRecord={{
+          id: crypto.randomUUID(),
+          date: new Date().toISOString().split("T")[0],
+          total_calories: totalCalories,
+          parts: parts,
+        }}
+      />
+
+      <Collapsible>
+        <CollapsibleTrigger className="flex w-full justify-between items-center py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border-t border-gray-200 pt-4">
+          <span>AI Analysis Details</span>
+          <span className="text-xs text-gray-500">Click to expand</span>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-2">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {aiResponse.reasoning}
+            </p>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </CardContent>
   );
 };
 

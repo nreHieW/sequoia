@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../ui/button";
+import { X } from "lucide-react";
 
 const fetchSleepRecords = async () => {
   const { data: initialData, error } = await supabase
@@ -210,20 +211,60 @@ const SleepGraph = () => {
   }: {
     selectedRecord: SleepRecord;
   }) => {
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
+    };
+
+    const formatDuration = (hours: number) => {
+      return `${Math.round(hours)}h`;
+    };
+
+    const formatTime = (timeString: string) => {
+      return timeString.substring(0, 5); 
+    };
+
     return (
-      <div className="flex flex-col gap-2 rounded-md border-1 border-black p-4 mt-4">
-        <h1 className="font-bold">Sleep Details</h1>
-        <p>Date: {selectedRecord.date}</p>
-        {/* <p>Sleep Time: {selectedRecord.sleep_time}</p>
-        <p>Wake Time: {selectedRecord.wake_time}</p>
-        <p>Hours Slept: {selectedRecord.hours_slept}</p>
-        <p>Timezone: {selectedRecord.timezone}</p> */}
+      <div className="flex flex-col gap-4 rounded-md border-1 border-black p-4 mt-4">
+        <div className="flex justify-between items-center">
+          <h1 className="font-bold">Sleep Details</h1>
+          <X
+            onClick={() => setSelectedRecord(null)}
+            className="cursor-pointer h-5 w-5"
+          />
+        </div>
+        
+        <div className="flex justify-between text-sm">
+          <div className="flex flex-col">
+            <p className="text-gray-600">Date</p>
+            <p className="font-medium">{formatDate(selectedRecord.date)}</p>
+          </div>
+          <div className="flex flex-col text-right">
+            <p className="text-gray-600">Duration</p>
+            <p className="font-medium">{formatDuration(selectedRecord.hours_slept)}</p>
+          </div>
+        </div>
+
+         <div className="flex justify-between text-sm">
+           <div className="flex flex-col">
+             <p className="text-gray-600">Bedtime</p>
+             <p className="font-medium">{formatTime(selectedRecord.sleep_time)}</p>
+           </div>
+           <div className="flex flex-col text-right">
+             <p className="text-gray-600">Wake Time</p>
+             <p className="font-medium">{formatTime(selectedRecord.wake_time)}</p>
+           </div>
+         </div>
       </div>
     );
   };
 
   return (
-    <div className="w-full min-h-80 mb-10 flex flex-col">
+    <div className="w-full min-h-80 mb-5 flex flex-col">
       <div className="flex justify-end gap-1 mb-2">
         <Button
           variant={viewMode === "day" ? "default" : "outline"}

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { Habit, HabitRecord } from "@/lib/types";
+import FoodGraph from "@/components/food/FoodGraph";
 
 const fetchHabits = async () => {
   const { data, error } = await supabase
@@ -42,7 +43,7 @@ export default function Home() {
   });
 
   return (
-    <div className="flex flex-col gap-4 px-4 md:px-6 lg:px-8 py-4">
+    <div className="flex flex-col gap-4 px-4 md:px-6 lg:px-8 py-4 pb-20">
       {/* Sleep Graph Card */}
       <Card>
         <CardHeader>
@@ -66,6 +67,14 @@ export default function Home() {
               habitRecords={habitRecords ?? []}
             />
           ))}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Food Tracker</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FoodGraph />
         </CardContent>
       </Card>
     </div>
